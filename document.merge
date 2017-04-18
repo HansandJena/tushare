@@ -1,0 +1,43 @@
+import tushare as ts
+from datetime import date
+import json
+
+hq = ts.get_today_all()
+print("1")
+#print(hq)
+
+hq = hq[['code', 'name', 'changepercent', 'trade', 'volume', 'turnoverratio']].sort_values('changepercent', ascending=False)
+print("2")
+#print(hq)
+
+adf = hq.head(15)
+print("3")
+print(adf)
+
+template = "d:\\hq1.docx"
+
+document = ts.MailMerge(template)  #查看有哪些域属性
+print("4")
+print(document.get_merge_fields())
+
+print(date.today())
+
+#参数赋值
+price_sh = float(ts.get_realtime_quotes('sh').ix[0]["price"])
+pre_close_sh = float(ts.get_realtime_quotes('sh').ix[0]["pre_close"])
+price_sz = float(ts.get_realtime_quotes('sz').ix[0]["price"])
+pre_close_sz = float(ts.get_realtime_quotes('sz').ix[0]["pre_close"])
+price_cyb = float(ts.get_realtime_quotes('cyb').ix[0]["price"])
+pre_close_cyb = float(ts.get_realtime_quotes('cyb').ix[0]["pre_close"])
+
+heads = {'today':'{:%Y-%m-%d}'.format(date.today()),
+    'sh': "%.2f" % price_sh ,
+    'shp': "%.2f%%" % ((price_sh - pre_close_sh) / pre_close_sh*100),
+    'sz': "%.2f" % price_sz ,
+    'szp': "%.2f%%" % ((price_sz - pre_close_sz) / pre_close_sz*100),
+    'cyb': "%.2f" % price_cyb ,
+    'cybp':"%.2f%%" % ((price_cyb - pre_close_cyb) / pre_close_cyb*100)}
+
+document.merge(**heads)
+document.merge_rows('code', json.loads(adf.to_json(orient='records',force_ascii=False)))
+document.write('d:\\hqs' + str(date.today()) + '.docx')
